@@ -1,21 +1,9 @@
-/* Copyright 2022 @ Keychron (https://www.keychron.com)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include QMK_KEYBOARD_H
 #include "keymap_german.h"
+#include "gamemode.h"
+
+#define FIRST_GAME_KEYCODE (KC_GAME_BEGIN + 1)
+#define LAST_GAME_KEYCODE (KC_GAME_END - 1)
 
 // clang-format off
 
@@ -40,6 +28,8 @@ enum custom_keycodes {
 
     KC_GAME_END
 };
+
+static game_mode_t current_game_mode;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [GAMING_BASE] = LAYOUT_iso_110(
@@ -80,3 +70,20 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [WIN_FN]   = {ENCODER_CCW_CW(RGB_VAD, RGB_VAI) }
 };
 #endif
+
+//clang-format on
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case FIRST_GAME_KEYCODE ... LAST_GAME_KEYCODE:
+            if (record->event.pressed) { // update the value on press, nothing on release
+                current_game_mode = keycode - FIRST_GAME_KEYCODE;
+            }
+            return false; // we handled our stuff, let QMK know it doesnt have to do anything
+
+        default:
+            return true; // QMK handles anything else
+    };
+
+    return true;
+}
