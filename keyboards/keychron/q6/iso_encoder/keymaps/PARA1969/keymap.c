@@ -2,10 +2,13 @@
 #include "keymap_german.h"
 #include "gamemode.h"
 
-#define FIRST_GAME_KEYCODE (KC_GAME_BEGIN + 1)
-#define LAST_GAME_KEYCODE (KC_GAME_END - 1)
-
 // clang-format off
+
+#define FIRST_GAME_KEYCODE (KC_GAME_BEGIN + 1)
+#define LAST_GAME_KEYCODE  (KC_GAME_END - 1)
+
+#define RESULT_QMK_STOP_PROCESSING false 
+#define RESULT_QMK_CONTINUE_PROCESSING true
 
 enum layers{
   GAMING_BASE, // Hardware Switch set to Mac
@@ -38,7 +41,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,              KC_DEL,   KC_END,   KC_PGDN,  KC_P7,    KC_P8,    KC_P9,
         KC_CAPS,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,  KC_NUHS,    KC_ENT,                                 KC_P4,    KC_P5,    KC_P6,    KC_PPLS,
         KC_LSFT,  KC_NUBS,  KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,              KC_RSFT,            KC_UP,              KC_P1,    KC_P2,    KC_P3,
-        KC_LCTL,  KC_LWIN,  KC_LALT,                                KC_SPC,                                 KC_RALT,  KC_RWIN,  MO(WIN_FN), KC_RCTL,  KC_LEFT,  KC_DOWN,  KC_RGHT,  KC_P0,              KC_PDOT,  KC_PENT),
+        KC_LCTL,  KC_LWIN,  KC_LALT,                                KC_SPC,                                 KC_RALT,  KC_RWIN,MO(GAMING_FN),KC_RCTL,  KC_LEFT,  KC_DOWN,  KC_RGHT,  KC_P0,              KC_PDOT,  KC_PENT),
     [GAMING_FN] = LAYOUT_iso_110(
         _______,  KC_BRID,  KC_BRIU,  _______,  _______,  RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,    RGB_TOG,  _______,  _______,  RGB_TOG,  _______,  _______,  _______,  _______,
         _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
@@ -69,21 +72,141 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [WIN_BASE] = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU) },
     [WIN_FN]   = {ENCODER_CCW_CW(RGB_VAD, RGB_VAI) }
 };
+#else 
+#warning "ENCODER_MAP_ENABLE is disabled!"
 #endif
 
-//clang-format on
+// clang-format on
+
+void change_game_mode(game_mode_t game_mode) {
+    current_game_mode = game_mode;
+
+    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+    switch (current_game_mode) {
+        case GAME_MODE_NONE: {
+            rgb_matrix_sethsv_noeeprom(HSV_CYAN);
+            break;
+        }
+        case GAME_MODE_CS2: {
+            rgb_matrix_sethsv_noeeprom(HSV_GREEN);
+            break;
+        }
+        case GAME_MODE_PUBG: {
+            rgb_matrix_sethsv_noeeprom(RGB_YELLOW);
+            break;
+        }
+        default:
+            break;
+    };
+}
+
+#if defined(DIP_SWITCH_ENABLE)
+bool dip_switch_update_user(uint8_t index, bool active) {
+    switch (index) {
+        case 0: {
+            if (active) {
+                change_game_mode(GAME_MODE_NONE);
+            } else {
+                change_game_mode(GAME_MODE_FIRST + 1);
+            }
+            break;
+        }
+    }
+    // if (active) {
+    //     rgb_matrix_indicators_user();
+    // }
+    return true;
+}
+#else
+#    warning "DIP_SWITCH_ENABLE is not enabled!"
+#endif
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
+        case KC_GAME_PREVIOUS: {
+            change_game_mode(GAME_MODE_CS2);
+            return RESULT_QMK_STOP_PROCESSING;
+
+            // game_mode_t previous_gamemode = current_game_mode - 1;
+
+            // if (previous_gamemode <= GAME_MODE_FIRST) {
+            //     current_game_mode = GAME_MODE_LAST - 1;
+            //     return RESULT_QMK_STOP_PROCESSING;
+            // }
+            // current_game_mode = previous_gamemode;
+            // return RESULT_QMK_STOP_PROCESSING;
+        }
+        case KC_GAME_NEXT: {
+            change_game_mode(GAME_MODE_PUBG);
+            return RESULT_QMK_STOP_PROCESSING;
+
+            // game_mode_t next_gamemode = current_game_mode + 1;
+            // if (next_gamemode >= GAME_MODE_LAST) {
+            //     current_game_mode = GAME_MODE_FIRST + 1;
+            //     return RESULT_QMK_STOP_PROCESSING;
+            // }
+            // current_game_mode = next_gamemode;
+            // return RESULT_QMK_STOP_PROCESSING;
+        }
         case FIRST_GAME_KEYCODE ... LAST_GAME_KEYCODE:
-            if (record->event.pressed) { // update the value on press, nothing on release
-                current_game_mode = keycode - FIRST_GAME_KEYCODE;
+            if (record->event.pressed) {
+                change_game_mode(keycode - KC_GAME_BEGIN);
             }
-            return false; // we handled our stuff, let QMK know it doesnt have to do anything
+            return RESULT_QMK_STOP_PROCESSING;
 
         default:
-            return true; // QMK handles anything else
+            return RESULT_QMK_CONTINUE_PROCESSING;
     };
 
+    return RESULT_QMK_CONTINUE_PROCESSING;
+}
+
+bool rgb_matrix_indicators_user(void) {
+    switch (current_game_mode) {
+        case GAME_MODE_NONE: {
+            // rgb_matrix_set_color_all(RGB_CYAN);
+            rgb_matrix_set_color(KC_W, RGB_RED);
+            break;
+        }
+        case GAME_MODE_CS2: {
+            // rgb_matrix_sethsv_noeeprom(HSV_GREEN);
+            // rgb_matrix_set_color_all(RGB_GREEN);
+            rgb_matrix_set_color(KC_W, RGB_BLUE);
+            break;
+        }
+        case GAME_MODE_PUBG: {
+            // rgb_matrix_sethsv_noeeprom(RGB_YELLOW);
+            // rgb_matrix_set_color_all(RGB_YELLOW);
+            break;
+        }
+        default:
+            break;
+    };
     return true;
+}
+
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+#if defined(CAPS_LOCK_LED_INDEX)
+    if (host_keyboard_led_state().caps_lock) {
+        RGB_MATRIX_INDICATOR_SET_COLOR(CAPS_LOCK_LED_INDEX, 255, 0, 0);
+    } else {
+        if (!rgb_matrix_get_flags()) {
+            RGB_MATRIX_INDICATOR_SET_COLOR(CAPS_LOCK_LED_INDEX, 0, 0, 0);
+        }
+    }
+#else
+#    warning "CAPS_LOCK_LED_INDEX is not defined!"
+#endif // CAPS_LOCK_LED_INDEX
+#if defined(NUM_LOCK_LED_INDEX)
+    if (host_keyboard_led_state().num_lock) {
+        RGB_MATRIX_INDICATOR_SET_COLOR(NUM_LOCK_LED_INDEX, 255, 0, 0);
+    } else {
+        if (!rgb_matrix_get_flags()) {
+            RGB_MATRIX_INDICATOR_SET_COLOR(NUM_LOCK_LED_INDEX, 0, 0, 0);
+        }
+    }
+#else
+#    warning "NUM_LOCK_LED_INDEX is not defined!"
+#endif // NUM_LOCK_LED_INDEX
+    return RESULT_QMK_STOP_PROCESSING;
 }
