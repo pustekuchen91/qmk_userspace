@@ -17,20 +17,29 @@ enum layers{
   WIN_FN
 };
 
+enum {
+    GAME_1,
+    GAME_2,
+    GAME_3,
+    GAME_4,
+    GAME_5,
+    GAME_6,
+    GAME_7,
+    GAME_8,
+    GAME_9,
+    GAME_N,
+} games;
+
 enum custom_keycodes {
     KC_GAME_NONE = QK_USER,
     KC_GAME_PREVIOUS,
     KC_GAME_NEXT,
 
     KC_GAME_BEGIN,
-
-    // Start Game Keycodes
-    KC_GAME_CS2,
-    KC_GAME_PUBG,
-    // End Game Keycodes
-
-    KC_GAME_END
+    KC_GAME_END = KC_GAME_BEGIN + GAME_N
 };
+
+#define GAME(x) (KC_GAME_BEGIN + x)
 
 static game_mode_t current_game_mode;
 
@@ -45,9 +54,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [GAMING_FN] = LAYOUT_iso_110(
         _______,  KC_BRID,  KC_BRIU,  _______,  _______,  RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,    RGB_TOG,  _______,  _______,  RGB_TOG,  _______,  _______,  _______,  _______,
         _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,
-        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,              _______,  _______,  _______,  KC_GAME_BEGIN +7,  KC_GAME_BEGIN +8,  KC_GAME_BEGIN +9,
-        _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,                                KC_GAME_BEGIN +4,  KC_GAME_BEGIN +5,  KC_GAME_BEGIN +6,  _______,
-        _______,  _______,  _______,  _______,  _______,  _______,  _______,  NK_TOGG,  _______,  _______,  _______,  _______,              _______,            _______,            KC_GAME_BEGIN +1,  KC_GAME_BEGIN +2,  KC_GAME_BEGIN +3,
+        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,              _______,  _______,  _______,  GAME(7),  GAME(8),  GAME(9),
+        _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  _______,  _______,    _______,                                GAME(4),  GAME(5),  GAME(6),_______,
+        _______,  _______,  _______,  _______,  _______,  _______,  _______,  NK_TOGG,  _______,  _______,  _______,  _______,              _______,            _______,            GAME(1),  GAME(2),  GAME(3),
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,    _______,  _______,  _______,  _______,  _______,            _______,  _______),
     [WIN_BASE] = LAYOUT_iso_110(
         KC_ESC,   KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,     KC_MUTE,  KC_PSCR,  KC_F13,   RGB_MOD,  KC_F14,   KC_F15 ,  KC_F16 ,  KC_F17 ,
@@ -81,18 +90,21 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 void change_game_mode(game_mode_t game_mode) {
     current_game_mode = game_mode;
 
-    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+    // rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
     switch (current_game_mode) {
         case GAME_MODE_NONE: {
-            rgb_matrix_sethsv_noeeprom(HSV_CYAN);
+            rgb_matrix_set_color_all(RGB_CYAN);
+            // rgb_matrix_sethsv_noeeprom(HSV_CYAN);
             break;
         }
         case GAME_MODE_CS2: {
-            rgb_matrix_sethsv_noeeprom(HSV_GREEN);
+            rgb_matrix_set_color_all(RGB_GREEN);
+            // rgb_matrix_sethsv_noeeprom(HSV_GREEN);
             break;
         }
         case GAME_MODE_PUBG: {
-            rgb_matrix_sethsv_noeeprom(RGB_YELLOW);
+            rgb_matrix_set_color_all(RGB_YELLOW);
+            // rgb_matrix_sethsv_noeeprom(HSV_YELLOW);
             break;
         }
         default:
@@ -164,19 +176,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 bool rgb_matrix_indicators_user(void) {
     switch (current_game_mode) {
         case GAME_MODE_NONE: {
-            // rgb_matrix_set_color_all(RGB_CYAN);
             rgb_matrix_set_color(KC_W, RGB_RED);
             break;
         }
         case GAME_MODE_CS2: {
-            // rgb_matrix_sethsv_noeeprom(HSV_GREEN);
-            // rgb_matrix_set_color_all(RGB_GREEN);
             rgb_matrix_set_color(KC_W, RGB_BLUE);
             break;
         }
         case GAME_MODE_PUBG: {
-            // rgb_matrix_sethsv_noeeprom(RGB_YELLOW);
-            // rgb_matrix_set_color_all(RGB_YELLOW);
+            rgb_matrix_set_color(KC_W, RGB_YELLOW);
             break;
         }
         default:
