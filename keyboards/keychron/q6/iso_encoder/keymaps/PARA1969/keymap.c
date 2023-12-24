@@ -90,21 +90,18 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 void change_game_mode(game_mode_t game_mode) {
     current_game_mode = game_mode;
 
-    // rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+    rgb_matrix_mode(RGB_MATRIX_SOLID_COLOR);
     switch (current_game_mode) {
         case GAME_MODE_NONE: {
             rgb_matrix_set_color_all(RGB_CYAN);
-            // rgb_matrix_sethsv_noeeprom(HSV_CYAN);
             break;
         }
         case GAME_MODE_CS2: {
-            rgb_matrix_set_color_all(RGB_GREEN);
-            // rgb_matrix_sethsv_noeeprom(HSV_GREEN);
+            rgb_matrix_set_color_all(RGB_BLUE);
             break;
         }
         case GAME_MODE_PUBG: {
             rgb_matrix_set_color_all(RGB_YELLOW);
-            // rgb_matrix_sethsv_noeeprom(HSV_YELLOW);
             break;
         }
         default:
@@ -124,9 +121,6 @@ bool dip_switch_update_user(uint8_t index, bool active) {
             break;
         }
     }
-    // if (active) {
-    //     rgb_matrix_indicators_user();
-    // }
     return true;
 }
 #else
@@ -139,7 +133,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             change_game_mode(GAME_MODE_CS2);
             return RESULT_QMK_STOP_PROCESSING;
 
-            // game_mode_t previous_gamemode = current_game_mode - 1;
+            // const game_mode_t previous_gamemode = current_game_mode - 1;
 
             // if (previous_gamemode <= GAME_MODE_FIRST) {
             //     current_game_mode = GAME_MODE_LAST - 1;
@@ -152,7 +146,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             change_game_mode(GAME_MODE_PUBG);
             return RESULT_QMK_STOP_PROCESSING;
 
-            // game_mode_t next_gamemode = current_game_mode + 1;
+            // const game_mode_t next_gamemode = current_game_mode + 1;
             // if (next_gamemode >= GAME_MODE_LAST) {
             //     current_game_mode = GAME_MODE_FIRST + 1;
             //     return RESULT_QMK_STOP_PROCESSING;
@@ -171,26 +165,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     };
 
     return RESULT_QMK_CONTINUE_PROCESSING;
-}
-
-bool rgb_matrix_indicators_user(void) {
-    switch (current_game_mode) {
-        case GAME_MODE_NONE: {
-            rgb_matrix_set_color(KC_W, RGB_RED);
-            break;
-        }
-        case GAME_MODE_CS2: {
-            rgb_matrix_set_color(KC_W, RGB_BLUE);
-            break;
-        }
-        case GAME_MODE_PUBG: {
-            rgb_matrix_set_color(KC_W, RGB_YELLOW);
-            break;
-        }
-        default:
-            break;
-    };
-    return true;
 }
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
@@ -216,5 +190,69 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 #else
 #    warning "NUM_LOCK_LED_INDEX is not defined!"
 #endif // NUM_LOCK_LED_INDEX
+
+    if (get_highest_layer(layer_state) >= 0) {
+        uint8_t layer = get_highest_layer(layer_state);
+
+        for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
+            for (uint8_t col = 0; col < MATRIX_COLS; ++col) {
+                uint8_t index = g_led_config.matrix_co[row][col];
+                if (index >= led_min && index < led_max && index != NO_LED) {
+                    const int keycode = keymap_key_to_keycode(layer, (keypos_t){col, row});
+                    switch (current_game_mode) {
+                        case GAME_MODE_CS2: {
+                            switch (keycode) {
+                                case KC_W:
+                                case KC_A:
+                                case KC_S:
+                                case KC_D:
+                                case KC_LSFT:
+                                case KC_LCTL:
+                                case KC_SPACE:
+                                    rgb_matrix_set_color(index, RGB_CYAN);
+                                    break;
+                                case KC_3:
+                                    rgb_matrix_set_color(index, RGB_MAGENTA);
+                                    break;
+                                case KC_4:
+                                    rgb_matrix_set_color(index, RGB_WHITE);
+                                    break;
+                                case KC_5:
+                                    rgb_matrix_set_color(index, RGB_GREEN);
+                                    break;
+                                case KC_6:
+                                case KC_G:
+                                    rgb_matrix_set_color(index, RGB_RED);
+                                    break;
+                                case KC_7:
+                                    rgb_matrix_set_color(index, RGB_YELLOW);
+                                    break;
+                                case KC_T:
+                                case KC_M:
+                                case KC_B:
+                                case KC_Z:
+                                case KC_Y:
+                                case KC_U:
+                                case KC_8:
+                                    rgb_matrix_set_color(index, RGB_ORANGE);
+                                    break;
+                                case KC_E:
+                                case KC_F:
+                                case KC_Q:
+                                    rgb_matrix_set_color(index, RGB_PURPLE);
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        }
+                        case GAME_MODE_NONE:
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
     return RESULT_QMK_STOP_PROCESSING;
 }
